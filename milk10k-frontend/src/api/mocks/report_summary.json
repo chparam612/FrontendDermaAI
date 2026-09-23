@@ -1,0 +1,44 @@
+{
+  "status": "placeholder",
+  "last_updated": "2026-09-23",
+  "macro_f1": null,
+  "per_class_f1": {
+    "AKIEC": 0.0,
+    "BCC": 0.0,
+    "BEN_OTH": 0.0,
+    "BKL": 0.0,
+    "DF": 0.0,
+    "INF": 0.0,
+    "MAL_OTH": null,
+    "MEL": 0.0,
+    "NV": 0.0,
+    "SCCKA": 0.0,
+    "VASC": 0.0
+  },
+  "tail_class_f1": {
+    "MAL_OTH": null,
+    "DF": 0.0,
+    "INF": 0.0,
+    "VASC": 0.0,
+    "BEN_OTH": 0.0
+  },
+  "skin_tone_fnr": {
+    "dark": {
+      "fnr": 0.0,
+      "n_lesions": 0,
+      "low_confidence": true
+    },
+    "medium": {
+      "fnr": 0.0,
+      "n_lesions": 0,
+      "low_confidence": true
+    },
+    "light": {
+      "fnr": 0.0,
+      "n_lesions": 0,
+      "low_confidence": true
+    }
+  },
+  "fnr_gap": 0.0,
+  "note": "PLACEHOLDER DATA: results/ablation_table.csv does not exist in backend repository. All values are synthetic zeroes or unestimated placeholders for layout demonstration only."
+}

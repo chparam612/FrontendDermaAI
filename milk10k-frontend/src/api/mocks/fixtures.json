@@ -1,0 +1,60 @@
+{
+  "benign": {
+    "predicted_class": "NV",
+    "confidence": 0.92,
+    "malignant_probability": 0.05,
+    "per_class_probs": {
+      "AKIEC": 0.01,
+      "BCC": 0.01,
+      "BEN_OTH": 0.01,
+      "BKL": 0.01,
+      "DF": 0.01,
+      "INF": 0.01,
+      "MAL_OTH": 0.005,
+      "MEL": 0.005,
+      "NV": 0.92,
+      "SCCKA": 0.005,
+      "VASC": 0.005
+    },
+    "concept_scores": {
+      "ulceration_crust": 0.05,
+      "hair": 0.35,
+      "vasculature": 0.12,
+      "erythema": 0.08,
+      "pigmented": 0.88,
+      "gel_fluid": 0.04,
+      "skin_markings": 0.72
+    },
+    "explainability_overlay": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+    "model_version": "milk10k-mock-v1.0"
+  },
+  "malignant": {
+    "predicted_class": "MEL",
+    "confidence": 0.88,
+    "malignant_probability": 0.91,
+    "per_class_probs": {
+      "AKIEC": 0.02,
+      "BCC": 0.03,
+      "BEN_OTH": 0.005,
+      "BKL": 0.01,
+      "DF": 0.005,
+      "INF": 0.005,
+      "MAL_OTH": 0.02,
+      "MEL": 0.88,
+      "NV": 0.015,
+      "SCCKA": 0.005,
+      "VASC": 0.005
+    },
+    "concept_scores": {
+      "ulceration_crust": 0.68,
+      "hair": 0.10,
+      "vasculature": 0.76,
+      "erythema": 0.54,
+      "pigmented": 0.82,
+      "gel_fluid": 0.15,
+      "skin_markings": 0.41
+    },
+    "explainability_overlay": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+    "model_version": "milk10k-mock-v1.0"
+  }
+}
