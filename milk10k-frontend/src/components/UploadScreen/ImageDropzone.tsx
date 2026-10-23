@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react';
-import { UploadCloud, Image as ImageIcon, X, Check } from 'lucide-react';
+import { UploadCloud, Image as ImageIcon, X, Check, AlertCircle } from 'lucide-react';
+import { validateImageFile } from '../../utils/imageValidation';
 
 export interface ImageDropzoneProps {
   id: string;
@@ -9,6 +10,7 @@ export interface ImageDropzoneProps {
   required?: boolean;
   file: File | null;
   onFileChange: (file: File | null) => void;
+  onError?: (errorMsg: string | null) => void;
 }
 
 export function ImageDropzone({
@@ -18,18 +20,23 @@ export function ImageDropzone({
   required = false,
   file,
   onFileChange,
+  onError,
 }: ImageDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [dropzoneError, setDropzoneError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Generate and manage object URL for thumbnail preview
   useEffect(() => {
     if (!file) {
+      // oxlint-disable-next-line react/set-state-in-effect
+      setPreviewUrl(null);
       return;
     }
 
     const objectUrl = URL.createObjectURL(file);
+    // oxlint-disable-next-line react/set-state-in-effect
     setPreviewUrl(objectUrl);
 
     return () => {
@@ -37,6 +44,23 @@ export function ImageDropzone({
       setPreviewUrl(null);
     };
   }, [file]);
+
+  const processSelectedFile = (selected: File) => {
+    const validation = validateImageFile(selected);
+    if (!validation.isValid) {
+      const err = validation.error ?? 'Invalid image file';
+      setDropzoneError(err);
+      onError?.(err);
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
+      return;
+    }
+
+    setDropzoneError(null);
+    onError?.(null);
+    onFileChange(selected);
+  };
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -57,22 +81,21 @@ export function ImageDropzone({
 
     const droppedFiles = e.dataTransfer.files;
     if (droppedFiles && droppedFiles.length > 0) {
-      const selected = droppedFiles[0];
-      if (selected.type.startsWith('image/')) {
-        onFileChange(selected);
-      }
+      processSelectedFile(droppedFiles[0]);
     }
   };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
     if (selectedFiles && selectedFiles.length > 0) {
-      onFileChange(selectedFiles[0]);
+      processSelectedFile(selectedFiles[0]);
     }
   };
 
   const handleRemove = (e: MouseEvent) => {
     e.stopPropagation();
+    setDropzoneError(null);
+    onError?.(null);
     onFileChange(null);
     if (inputRef.current) {
       inputRef.current.value = '';
@@ -93,7 +116,7 @@ export function ImageDropzone({
           {label} {required ? <span className="text-red-600 font-bold" aria-hidden="true">*</span> : <span className="text-slate-500 font-normal text-xs">(optional)</span>}
         </label>
         <span className="text-xs text-slate-500">
-          {required ? 'Required for inference' : 'Optional complementary view'}
+          {required ? 'Required by model' : 'Optional complementary view'}
         </span>
       </div>
 
@@ -108,7 +131,9 @@ export function ImageDropzone({
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
         className={`relative flex flex-col items-center justify-center p-5 rounded-xl border-2 border-dashed transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-sky-600 focus-visible:ring-offset-2 ${
-          isDragging
+          dropzoneError
+            ? 'border-red-300 bg-red-50/50'
+            : isDragging
             ? 'border-sky-600 bg-sky-50/80 scale-[1.01]'
             : file
             ? 'border-emerald-500 bg-emerald-50/30'
@@ -119,7 +144,7 @@ export function ImageDropzone({
           ref={inputRef}
           id={id}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png"
           aria-required={required}
           onChange={handleInputChange}
           className="sr-only"
@@ -154,7 +179,7 @@ export function ImageDropzone({
               type="button"
               onClick={handleRemove}
               aria-label={`Remove selected ${label}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-colors focus-visible:ring-2 focus-visible:ring-red-600 outline-none"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-colors focus-visible:ring-2 focus-visible:ring-red-600 outline-none cursor-pointer"
             >
               <X className="w-4 h-4" aria-hidden="true" />
               Remove
@@ -173,11 +198,22 @@ export function ImageDropzone({
               <span className="text-sky-600 hover:underline">Click to browse</span> or drag & drop
             </p>
             <p id={`${id}-desc`} className="text-xs text-slate-500 mt-1">
-              {description} (JPEG, PNG, WEBP)
+              {description} (JPEG or PNG, up to 10 MB)
             </p>
           </div>
         )}
       </div>
+
+      {dropzoneError && (
+        <div
+          role="alert"
+          aria-live="polite"
+          className="flex items-center gap-1.5 text-xs font-medium text-red-600 bg-red-50 p-2 rounded-lg border border-red-200"
+        >
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+          <span>{dropzoneError}</span>
+        </div>
+      )}
     </div>
   );
 }

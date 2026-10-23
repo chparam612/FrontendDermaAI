@@ -54,6 +54,9 @@ export function ResultScreen({ result, previewUrl, onBackToUpload }: ResultScree
         confidence={result.confidence}
         malignantProbability={result.malignant_probability}
         modelVersion={result.model_version}
+        inferenceMs={result.inference_ms}
+        inputNote={result.input_note}
+        disclaimer={result.disclaimer}
       />
 
       {/* 2 & 3. Explainability Lesion View & 11-Class Probability Distribution */}

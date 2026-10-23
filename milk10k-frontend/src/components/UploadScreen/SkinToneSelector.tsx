@@ -17,10 +17,10 @@ export function SkinToneSelector({ value, onChange }: SkinToneSelectorProps) {
     <fieldset className="flex flex-col gap-3 w-full border border-slate-200 rounded-xl p-4 bg-white shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
         <legend className="text-sm font-semibold text-slate-800">
-          Skin Tone / Fitzpatrick Category <span className="text-xs text-slate-500 font-normal">(optional metadata)</span>
+          Skin Tone / Fitzpatrick Category <span className="text-xs text-amber-700 font-medium bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Not used by the model (recorded only)</span>
         </legend>
         <span className="text-xs text-slate-500">
-          Used to verify demographic fairness & model calibration
+          Echoed back for fairness auditing; model does not ingest skin tone
         </span>
       </div>
 
@@ -64,7 +64,7 @@ export function SkinToneSelector({ value, onChange }: SkinToneSelectorProps) {
         <button
           type="button"
           onClick={() => onChange(undefined)}
-          className={`text-xs px-3 py-1.5 rounded-lg border transition-colors outline-none focus-visible:ring-2 focus-visible:ring-slate-400 ${
+          className={`text-xs px-3 py-1.5 rounded-lg border transition-colors outline-none focus-visible:ring-2 focus-visible:ring-slate-400 cursor-pointer ${
             value === undefined
               ? 'bg-slate-100 text-slate-800 font-semibold border-slate-300'
               : 'text-slate-500 hover:text-slate-700 border-transparent hover:bg-slate-50'
