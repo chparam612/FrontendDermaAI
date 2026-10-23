@@ -55,6 +55,10 @@ describe('Honesty & Guard Test (Phase F5 Wording Rules)', () => {
         for (const forbidden of FORBIDDEN_STRINGS) {
           // Check case-insensitive to ensure strict honesty
           if (lineText.toLowerCase().includes(forbidden.toLowerCase())) {
+            // Explicit disclaimer "not Fitzpatrick" is allowed per audit instructions
+            if (forbidden.toLowerCase() === 'fitzpatrick' && lineText.includes('not Fitzpatrick')) {
+              continue;
+            }
             violations.push({
               file: path.relative(srcDir, filePath),
               line: idx + 1,

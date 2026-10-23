@@ -355,6 +355,9 @@ export function FairnessPanel() {
                 <p className="text-amber-800 font-medium">
                   Groups have different diagnosis mixes, so these gaps are not like-for-like.
                 </p>
+                <p className="text-slate-600 font-medium">
+                  Tone 0 has no test lesions and Tone 1 has 12, so this test split cannot support conclusions about performance on darker skin.
+                </p>
               </div>
               <p className="text-[11px] text-slate-500 italic border-t border-slate-200 pt-1.5">
                 {skin_tone_subgroup_metrics.disparity_caveat}

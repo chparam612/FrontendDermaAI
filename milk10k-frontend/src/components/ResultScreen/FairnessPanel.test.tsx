@@ -63,6 +63,11 @@ describe('FairnessPanel', () => {
     expect(screen.getByText(/between Tone 2 \(n=72\) and Tone 3 \(n=486\)/i)).toBeInTheDocument();
     expect(screen.getByText(/between Tone 2 \(n=72\) and Tone 1 \(n=12\)/i)).toBeInTheDocument();
     expect(screen.getByText(/Groups have different diagnosis mixes, so these gaps are not like-for-like\./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Tone 0 has no test lesions and Tone 1 has 12, so this test split cannot support conclusions about performance on darker skin\./i
+      )
+    ).toBeInTheDocument();
 
     // Disparity caveat
     expect(screen.getByText(reportSummary.skin_tone_subgroup_metrics.disparity_caveat)).toBeInTheDocument();
