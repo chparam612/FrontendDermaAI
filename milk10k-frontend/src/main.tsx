@@ -3,18 +3,17 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.tsx';
 
-async function enableMocking() {
-  if (!import.meta.env.DEV) {
-    return;
+async function prepareApp() {
+  // MSW mock interceptor starts strictly when VITE_USE_MOCK=true is enabled. Default is real backend API.
+  if (import.meta.env.VITE_USE_MOCK === 'true') {
+    const { worker } = await import('./api/mocks/browser');
+    await worker.start({
+      onUnhandledRequest: 'bypass',
+    });
   }
-
-  const { worker } = await import('./api/mocks/browser');
-  return worker.start({
-    onUnhandledRequest: 'bypass',
-  });
 }
 
-enableMocking().then(() => {
+prepareApp().then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <App />
