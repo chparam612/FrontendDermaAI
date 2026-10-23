@@ -13,6 +13,7 @@
   "overall_test_metrics": {
     "source": "results/exp2c_panderm_uniform_seed42/exp2c_panderm_uniform_artifacts/summary_metrics.json:test_overall",
     "macro_f1": 0.469,
+    "seed43_replicate_macro_f1": 0.3636,
     "accuracy": 0.7214,
     "balanced_accuracy": 0.4724,
     "weighted_f1": 0.7131,

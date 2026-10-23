@@ -1,9 +1,13 @@
 import { useState } from 'react';
-import { ChevronDown, AlertTriangle, Scale, ShieldAlert, FileText, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, Scale, ShieldAlert, FileText, CheckCircle2 } from 'lucide-react';
 import rawReportData from '../../data/report_summary.json';
 import type { ReportSummaryPayload } from '../../data/reportSummaryTypes';
 
 const reportData = rawReportData as ReportSummaryPayload;
+
+function sanitizePath(p: string): string {
+  return p.replace(/^[A-Za-z]:[\\/][^\\/]+[\\/]/g, '').replace(/Users[\\/][^\\/]+[\\/]/g, '');
+}
 
 export function FairnessPanel() {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
@@ -16,6 +20,10 @@ export function FairnessPanel() {
     skin_tone_subgroup_metrics,
     caveats,
   } = reportData;
+
+  const replicateScore = overall_test_metrics.seed43_replicate_macro_f1
+    ? (overall_test_metrics.seed43_replicate_macro_f1 * 100).toFixed(1)
+    : '36.4';
 
   return (
     <section
@@ -40,7 +48,7 @@ export function FairnessPanel() {
               This model's accuracy varies by diagnosis rarity and skin tone — see full report.
             </span>
             <span className="text-[11px] text-slate-500 block mt-0.5">
-              Audited on MILK10k held-out partition (N={provenance.total_test_samples} lesions, Macro-F1 = {(overall_test_metrics.macro_f1 * 100).toFixed(1)}%)
+              Audited on MILK10k held-out partition (N={provenance.total_test_samples} lesions) &bull; Single run (seed 42): Macro-F1 = {(overall_test_metrics.macro_f1 * 100).toFixed(1)}% (second run of the same recipe scored substantially lower: {replicateScore}%)
             </span>
           </div>
         </div>
@@ -61,12 +69,12 @@ export function FairnessPanel() {
           aria-labelledby="fairness-panel-trigger"
           className="p-5 pt-0 border-t border-slate-100 flex flex-col gap-6"
         >
-          {/* Audit Verification Stamp */}
+          {/* Neutral Audit Status Stamp */}
           <div className="mt-4 p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
               <span className="font-semibold text-slate-800">
-                Audit Status: {reportData.status} &bull; Model: {provenance.model_architecture}
+                Generated from saved results files &bull; Model: {provenance.model_architecture}
               </span>
             </div>
             <div className="font-mono text-[11px] text-slate-500">
@@ -81,7 +89,7 @@ export function FairnessPanel() {
                 1. Training &amp; Split Provenance
               </h5>
               <span className="text-[10px] font-mono text-slate-400">
-                Source: {provenance.source}
+                Source: {sanitizePath(provenance.source)}
               </span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -111,16 +119,16 @@ export function FairnessPanel() {
                 2. Overall Evaluation Metrics (Held-out Test Partition)
               </h5>
               <span className="text-[10px] font-mono text-slate-400">
-                Source: {overall_test_metrics.source}
+                Source: {sanitizePath(overall_test_metrics.source)}
               </span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                <span className="text-[10px] uppercase font-bold text-slate-500 block">Macro-F1</span>
+                <span className="text-[10px] uppercase font-bold text-slate-500 block">Macro-F1 (Seed 42)</span>
                 <span className="text-lg font-black text-slate-900 font-mono mt-0.5 block">
                   {(overall_test_metrics.macro_f1 * 100).toFixed(1)}%
                 </span>
-                <span className="text-[10px] text-slate-400">Target baseline</span>
+                <span className="text-[10px] text-slate-400">Single primary run</span>
               </div>
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                 <span className="text-[10px] uppercase font-bold text-slate-500 block">Accuracy</span>
@@ -161,7 +169,7 @@ export function FairnessPanel() {
                 3. Malignant vs Benign Binary Detection Metrics
               </h5>
               <span className="text-[10px] font-mono text-slate-400">
-                Source: {malignant_vs_benign_metrics.source}
+                Source: {sanitizePath(malignant_vs_benign_metrics.source)}
               </span>
             </div>
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-3">
@@ -214,7 +222,7 @@ export function FairnessPanel() {
                 4. Per-Class Diagnostic Performance &amp; Long-Tail Support
               </h5>
               <span className="text-[10px] font-mono text-slate-400">
-                Source: {per_class_metrics.source}
+                Source: {sanitizePath(per_class_metrics.source)}
               </span>
             </div>
             <div className="border border-slate-200 rounded-xl overflow-x-auto bg-white">
@@ -271,14 +279,14 @@ export function FairnessPanel() {
             </div>
           </div>
 
-          {/* BLOCK 5: Skin-Tone Subgroups with Low-Confidence Indicator */}
+          {/* BLOCK 5: Demographic Subgroups (Skin Tone Disparity Audit) */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <h5 className="text-xs font-bold uppercase tracking-wider text-slate-700">
                 5. Demographic Subgroups (Skin Tone Disparity Audit)
               </h5>
               <span className="text-[10px] font-mono text-slate-400">
-                Source: {skin_tone_subgroup_metrics.source}
+                Source: {sanitizePath(skin_tone_subgroup_metrics.source)}
               </span>
             </div>
 
@@ -320,7 +328,7 @@ export function FairnessPanel() {
                         role="status"
                         className="flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300"
                       >
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-700 shrink-0" aria-hidden="true" />
+                        <ShieldAlert className="w-3.5 h-3.5 text-amber-700 shrink-0" aria-hidden="true" />
                         <span>Low confidence (n &lt; 30)</span>
                       </div>
                     ) : (
@@ -334,13 +342,21 @@ export function FairnessPanel() {
               })}
             </div>
 
-            {/* Disparity metrics and caveat */}
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <span className="font-semibold">Disparity Summary: </span>
-                <span>Accuracy Disparity = {(skin_tone_subgroup_metrics.accuracy_disparity * 100).toFixed(2)}% | Balanced Accuracy Disparity = {(skin_tone_subgroup_metrics.balanced_accuracy_disparity * 100).toFixed(2)}%</span>
+            {/* Disparity metrics with explicit tone comparisons and diagnosis mix caveat */}
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 flex flex-col gap-2">
+              <div className="space-y-1">
+                <span className="font-semibold text-slate-800 block text-xs">Disparity Comparison:</span>
+                <p className="leading-relaxed">
+                  <strong>Balanced Accuracy Disparity = {(skin_tone_subgroup_metrics.balanced_accuracy_disparity * 100).toFixed(2)}%</strong> between Tone 2 (n=72) and Tone 3 (n=486).
+                </p>
+                <p className="leading-relaxed">
+                  <strong>Accuracy Disparity = {(skin_tone_subgroup_metrics.accuracy_disparity * 100).toFixed(2)}%</strong> between Tone 2 (n=72) and Tone 1 (n=12).
+                </p>
+                <p className="text-amber-800 font-medium">
+                  Groups have different diagnosis mixes, so these gaps are not like-for-like.
+                </p>
               </div>
-              <p className="text-[11px] text-slate-500 italic max-w-lg">
+              <p className="text-[11px] text-slate-500 italic border-t border-slate-200 pt-1.5">
                 {skin_tone_subgroup_metrics.disparity_caveat}
               </p>
             </div>
@@ -354,7 +370,7 @@ export function FairnessPanel() {
                 6. Critical Scientific &amp; Clinical Caveats (Verbatim)
               </h5>
               <span className="text-[10px] font-mono text-slate-400">
-                Source: {caveats.source}
+                Source: {sanitizePath(caveats.source)}
               </span>
             </div>
             <ul className="space-y-2 text-xs text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-200 list-disc pl-5">

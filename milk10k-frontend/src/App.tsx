@@ -57,7 +57,7 @@ export function App() {
                 MILK10k Skin AI
               </h1>
               <p className="text-[11px] text-slate-500 font-medium">
-                Clinical Dermatology Decision Support
+                Research prototype - MILK10k
               </p>
             </div>
           </div>

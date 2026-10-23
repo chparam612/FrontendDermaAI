@@ -4,12 +4,12 @@ export interface SkinToneSelectorProps {
 }
 
 const TONE_OPTIONS = [
-  { value: 0, label: 'Type 0', desc: 'Extremely pale', swatch: '#FFF0E5' },
-  { value: 1, label: 'Type 1', desc: 'Fair', swatch: '#F9E4D4' },
-  { value: 2, label: 'Type 2', desc: 'Medium fair', swatch: '#E8C5A5' },
-  { value: 3, label: 'Type 3', desc: 'Olive / Medium', swatch: '#BA8D68' },
-  { value: 4, label: 'Type 4', desc: 'Brown', swatch: '#8D5B36' },
-  { value: 5, label: 'Type 5', desc: 'Dark brown / Black', swatch: '#452C1E' },
+  { value: 0, label: 'Class 0', desc: 'Metadata class 0', swatch: '#FFF0E5' },
+  { value: 1, label: 'Class 1', desc: 'Metadata class 1', swatch: '#F9E4D4' },
+  { value: 2, label: 'Class 2', desc: 'Metadata class 2', swatch: '#E8C5A5' },
+  { value: 3, label: 'Class 3', desc: 'Metadata class 3', swatch: '#BA8D68' },
+  { value: 4, label: 'Class 4', desc: 'Metadata class 4', swatch: '#8D5B36' },
+  { value: 5, label: 'Class 5', desc: 'Metadata class 5', swatch: '#452C1E' },
 ] as const;
 
 export function SkinToneSelector({ value, onChange }: SkinToneSelectorProps) {
@@ -17,16 +17,16 @@ export function SkinToneSelector({ value, onChange }: SkinToneSelectorProps) {
     <fieldset className="flex flex-col gap-3 w-full border border-slate-200 rounded-xl p-4 bg-white shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
         <legend className="text-sm font-semibold text-slate-800">
-          Skin Tone / Fitzpatrick Category <span className="text-xs text-amber-700 font-medium bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Not used by the model (recorded only)</span>
+          MILK10k skin-tone class 0–5 <span className="text-xs text-amber-700 font-medium bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Not used by the model (recorded only)</span>
         </legend>
         <span className="text-xs text-slate-500">
-          Echoed back for fairness auditing; model does not ingest skin tone
+          Recorded as defined in the MILK10k metadata
         </span>
       </div>
 
       <div
         role="radiogroup"
-        aria-label="Skin tone selection (0 to 5 or skip)"
+        aria-label="MILK10k skin-tone class selection (0 to 5 or skip)"
         className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-1"
       >
         {TONE_OPTIONS.map((opt) => {

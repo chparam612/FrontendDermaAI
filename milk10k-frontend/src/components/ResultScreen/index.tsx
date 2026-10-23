@@ -28,10 +28,10 @@ export function ResultScreen({ result, previewUrl, onBackToUpload }: ResultScree
           </button>
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">
-              Diagnostic Assessment Report
+              Model Output Report
             </h2>
             <p className="text-xs text-slate-500">
-              Evaluated via multi-view PanDerm vision model
+              Single-view model: dermoscopic image only
             </p>
           </div>
         </div>
@@ -44,7 +44,7 @@ export function ResultScreen({ result, previewUrl, onBackToUpload }: ResultScree
       >
         <AlertOctagon className="w-4 h-4 shrink-0 text-amber-700" aria-hidden="true" />
         <span>
-          Clinical Notice: Results are non-diagnostic decision-support estimations derived from multi-modal analysis.
+          Clinical Notice: Results are non-diagnostic decision-support estimations derived from a single dermoscopic image.
         </span>
       </div>
 

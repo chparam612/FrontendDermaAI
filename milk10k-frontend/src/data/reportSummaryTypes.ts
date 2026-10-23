@@ -12,6 +12,7 @@ export interface ProvenanceReport {
 export interface OverallTestMetrics {
   source: string;
   macro_f1: number;
+  seed43_replicate_macro_f1?: number;
   accuracy: number;
   balanced_accuracy: number;
   weighted_f1: number;

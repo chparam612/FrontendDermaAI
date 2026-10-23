@@ -37,16 +37,16 @@ export function PerClassProbChart({ perClassProbs }: PerClassProbChartProps) {
 
   return (
     <section
-      aria-label="Differential Diagnostic Distribution (11 Classes)"
+      aria-label="Model Class Scores (11 Classes)"
       className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-4"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
         <div>
           <h4 className="text-base font-bold text-slate-900">
-            Differential Diagnostic Distribution
+            Model class scores (uncalibrated)
           </h4>
           <p className="text-xs text-slate-500 mt-0.5">
-            Model class probabilities across 11 diagnostic classes (sorted descending)
+            Model class scores across 11 diagnostic classes (sorted descending)
           </p>
         </div>
 
@@ -66,7 +66,7 @@ export function PerClassProbChart({ perClassProbs }: PerClassProbChartProps) {
       {/* Screen-reader accessible tabular fallback */}
       <div className="sr-only">
         <p>
-          Differential diagnostic distribution chart with 11 classes sorted descending:
+          Model class scores chart with 11 classes sorted descending:
         </p>
         <ul>
           {chartData.map((item) => (

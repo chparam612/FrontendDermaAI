@@ -89,7 +89,7 @@ The sample images required for manual verification reside strictly within the ba
 | Test Item | Action | Expected Behavior |
 | :--- | :--- | :--- |
 | **1. Connection Indicator** | Open `http://localhost:5173` with backend running. | Green status pill appears in header: `Online (cpu) [137c79912024]`. |
-| **2. True BCC Malignancy** | Upload `ISIC_8325963.jpg` to Dermoscopic dropzone and click **Analyze**. | Primary card predicts `BCC` with uncalibrated score ~89.6%, malignant probability ~93.1%, and attention overlay highlighting the central lesion nest. |
+| **2. True BCC Malignancy** | Upload `ISIC_8325963.jpg` to Dermoscopic dropzone and click **Analyze**. | Primary card predicts `BCC` with uncalibrated score ~89.6%, malignant probability ~93.7%, and attention overlay highlighting the central lesion nest. Observed inference latency on CPU on this laptop is approximately 1.5–2.2 s (not 450–520 ms). |
 | **3. True NV Benign** | Upload `ISIC_8015399.jpg` to Dermoscopic dropzone and click **Analyze**. | Primary card predicts `NV` with uncalibrated score ~88.9%, malignant probability ~6.9%, benign badge active. |
 | **4. False Alarm (BKL Mimicker)** | Upload `ISIC_2531111.jpg` (True BKL) and click **Analyze**. | Honest error displayed: Model predicts `BCC` (score ~87.4%), highlighting benign-to-malignant false positive rate. |
 | **5. Critical Miss (Melanoma)** | Upload `ISIC_8667960.jpg` (True Melanoma) and click **Analyze**. | Critical false negative demonstrated honestly: Model predicts `NV` (~91.0% score, Melanoma score only 0.6%). Illustrates why AI decision support is uncalibrated. |

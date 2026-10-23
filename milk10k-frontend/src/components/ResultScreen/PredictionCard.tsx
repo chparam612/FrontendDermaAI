@@ -29,7 +29,7 @@ export function PredictionCard({
 
   return (
     <article
-      aria-label="Diagnostic Prediction Summary"
+      aria-label="Model Prediction Summary"
       className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col gap-5"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
@@ -42,18 +42,23 @@ export function PredictionCard({
           </h3>
         </div>
 
-        {/* Accessible status badge with icon + text */}
-        <div
-          role="status"
-          className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-bold border shadow-xs ${token.bgClass}`}
-        >
-          <StatusIcon className={`w-5 h-5 shrink-0 ${token.iconClass}`} aria-hidden="true" />
-          <div className="flex flex-col">
-            <span className="leading-tight">{token.badgeLabel}</span>
-            <span className="text-[10px] opacity-80 font-medium">
-              Score (Malignant Classes): {malignantPct}%
-            </span>
+        {/* Accessible status badge with icon + text + uncalibrated warning */}
+        <div className="flex flex-col items-start sm:items-end gap-1">
+          <div
+            role="status"
+            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-bold border shadow-xs ${token.bgClass}`}
+          >
+            <StatusIcon className={`w-5 h-5 shrink-0 ${token.iconClass}`} aria-hidden="true" />
+            <div className="flex flex-col">
+              <span className="leading-tight">{token.badgeLabel}</span>
+              <span className="text-[10px] opacity-80 font-medium">
+                Score (Malignant Classes): {malignantPct}%
+              </span>
+            </div>
           </div>
+          <span className="text-[10px] text-slate-500 font-medium leading-tight sm:text-right max-w-xs">
+            Not a risk estimate. Scores are uncalibrated; misses and false alarms occur.
+          </span>
         </div>
       </div>
 
