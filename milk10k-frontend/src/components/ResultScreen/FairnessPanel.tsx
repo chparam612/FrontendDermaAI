@@ -1,34 +1,21 @@
 import { useState } from 'react';
-import { ChevronDown, AlertTriangle, Info, Scale, ShieldAlert } from 'lucide-react';
-import reportSummary from '../../api/mocks/report_summary.json';
-import { TAIL_CLASSES, MALIGNANT_CLASSES } from '../../constants/diagnosisGroups';
+import { ChevronDown, AlertTriangle, Scale, ShieldAlert, FileText, CheckCircle2 } from 'lucide-react';
+import rawReportData from '../../data/report_summary.json';
+import type { ReportSummaryPayload } from '../../data/reportSummaryTypes';
 
-interface BucketData {
-  fnr: number;
-  n_lesions: number;
-  low_confidence: boolean;
-}
-
-interface ReportSummaryData {
-  status: 'real' | 'preliminary' | 'placeholder';
-  last_updated: string;
-  macro_f1: number | null;
-  per_class_f1: Record<string, number | null>;
-  tail_class_f1: Record<string, number | null>;
-  skin_tone_fnr: {
-    dark: BucketData;
-    medium: BucketData;
-    light: BucketData;
-  };
-  fnr_gap: number;
-  note?: string;
-}
+const reportData = rawReportData as ReportSummaryPayload;
 
 export function FairnessPanel() {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
-  const data = reportSummary as ReportSummaryData;
 
-  const isPreliminaryOrPlaceholder = data.status === 'placeholder' || data.status === 'preliminary';
+  const {
+    provenance,
+    overall_test_metrics,
+    malignant_vs_benign_metrics,
+    per_class_metrics,
+    skin_tone_subgroup_metrics,
+    caveats,
+  } = reportData;
 
   return (
     <section
@@ -48,9 +35,14 @@ export function FairnessPanel() {
           <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 shadow-2xs">
             <Scale className="w-4 h-4" aria-hidden="true" />
           </div>
-          <span className="text-sm font-semibold text-slate-800 leading-snug">
-            This model's accuracy varies by diagnosis rarity and skin tone — see full report.
-          </span>
+          <div>
+            <span className="text-sm font-semibold text-slate-800 leading-snug block">
+              This model's accuracy varies by diagnosis rarity and skin tone — see full report.
+            </span>
+            <span className="text-[11px] text-slate-500 block mt-0.5">
+              Audited on MILK10k held-out partition (N={provenance.total_test_samples} lesions, Macro-F1 = {(overall_test_metrics.macro_f1 * 100).toFixed(1)}%)
+            </span>
+          </div>
         </div>
 
         <ChevronDown
@@ -69,187 +61,207 @@ export function FairnessPanel() {
           aria-labelledby="fairness-panel-trigger"
           className="p-5 pt-0 border-t border-slate-100 flex flex-col gap-6"
         >
-          {/* Status Alert Banner for Placeholder / Preliminary Data */}
-          {isPreliminaryOrPlaceholder && (
-            <div
-              role="alert"
-              className="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 flex items-start gap-3 shadow-2xs"
-            >
-              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
-              <div className="text-xs space-y-1">
-                <p className="font-bold text-amber-950">
-                  {data.status === 'placeholder'
-                    ? 'Report data not yet available — showing placeholder values for layout purposes only.'
-                    : 'Preliminary evaluation data — benchmark runs still in progress.'}
-                </p>
-                <p className="text-amber-800">
-                  Backend evaluation table (<code className="font-mono text-amber-900 bg-amber-100/80 px-1 py-0.5 rounded">results/ablation_table.csv</code>) is not present. Numbers below are synthetic placeholders and must not be used for clinical decisions.
-                </p>
-              </div>
+          {/* Audit Verification Stamp */}
+          <div className="mt-4 p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
+              <span className="font-semibold text-slate-800">
+                Audit Status: {reportData.status} &bull; Model: {provenance.model_architecture}
+              </span>
             </div>
-          )}
-
-          {/* Metric Cards Grid: Macro-F1 & FNR Gap Headline */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* 1. Overall Macro-F1 */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between gap-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Overall Macro-F1
-                </span>
-                <span className="text-[11px] font-medium text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded">
-                  All 11 Classes
-                </span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-slate-900 font-mono">
-                  {data.macro_f1 !== null ? `${(data.macro_f1 * 100).toFixed(1)}%` : 'N/A'}
-                </span>
-                {data.status === 'placeholder' && (
-                  <span className="text-xs text-amber-700 font-semibold">(Placeholder)</span>
-                )}
-              </div>
-              <p className="text-[11px] text-slate-500">
-                Unweighted arithmetic mean of F1 scores across all diagnostic categories.
-              </p>
-            </div>
-
-            {/* 2. Headline FNR Gap */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between gap-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Max Disparity (FNR Gap)
-                </span>
-                <span className="text-[11px] font-medium text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded">
-                  Skin Tone Subgroups
-                </span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-slate-900 font-mono">
-                  {(data.fnr_gap * 100).toFixed(1)}%
-                </span>
-                {data.status === 'placeholder' && (
-                  <span className="text-xs text-amber-700 font-semibold">(Placeholder)</span>
-                )}
-              </div>
-              <p className="text-[11px] text-slate-500">
-                Maximum minus minimum False Negative Rate disparity across skin-tone buckets.
-              </p>
+            <div className="font-mono text-[11px] text-slate-500">
+              Split SHA: {provenance.split_sha256.slice(0, 16)}... | Seed {provenance.seed}
             </div>
           </div>
 
-          {/* Section: Subgroup Performance by Skin-Tone Bucket */}
-          <div className="flex flex-col gap-3">
+          {/* BLOCK 1: Provenance and Split Hash */}
+          <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <h5 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <ShieldAlert className="w-4 h-4 text-indigo-600" aria-hidden="true" />
-                Skin-Tone Disaggregated False Negative Rate (FNR)
+              <h5 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                1. Training &amp; Split Provenance
               </h5>
-              <span className="text-[11px] text-slate-400">
-                Section 6 Audit Threshold: n &ge; 30
+              <span className="text-[10px] font-mono text-slate-400">
+                Source: {provenance.source}
               </span>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {(['dark', 'medium', 'light'] as const).map((bucketKey) => {
-                const bucket = data.skin_tone_fnr[bucketKey];
-                const label = bucketKey.charAt(0).toUpperCase() + bucketKey.slice(1);
-
-                return (
-                  <div
-                    key={bucketKey}
-                    className="p-3.5 rounded-xl border border-slate-200 bg-white flex flex-col justify-between gap-3 shadow-2xs"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-800">{label} Skin Tone</span>
-                      <span className="text-[11px] font-mono text-slate-500">
-                        n = {bucket.n_lesions}
-                      </span>
-                    </div>
-
-                    <div className="flex items-baseline justify-between">
-                      <span className="text-xs text-slate-500">Malignancy FNR:</span>
-                      <span className="text-base font-bold font-mono text-slate-900">
-                        {(bucket.fnr * 100).toFixed(1)}%
-                      </span>
-                    </div>
-
-                    {/* Low-confidence indicator using both icon and text */}
-                    {bucket.low_confidence ? (
-                      <div className="flex items-center gap-1.5 text-xs text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg font-medium">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden="true" />
-                        <span>Low confidence (n &lt; 30)</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg font-medium">
-                        <span>Adequate sample size (n &ge; 30)</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-[10px] uppercase font-bold text-slate-500 block">Experiment</span>
+                <span className="font-semibold text-slate-800 text-xs mt-0.5 block truncate">{provenance.experiment_name}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-[10px] uppercase font-bold text-slate-500 block">Random Seed</span>
+                <span className="font-mono font-semibold text-slate-800 text-xs mt-0.5 block">{provenance.seed}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-[10px] uppercase font-bold text-slate-500 block">Evaluated Modality</span>
+                <span className="font-medium text-slate-800 text-xs mt-0.5 block truncate">{provenance.modality_evaluated}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-[10px] uppercase font-bold text-slate-500 block">Test Sample Size</span>
+                <span className="font-mono font-semibold text-slate-800 text-xs mt-0.5 block">{provenance.total_test_samples} lesions</span>
+              </div>
             </div>
           </div>
 
-          {/* Section: Tail-Class Diagnostic Performance */}
-          <div className="flex flex-col gap-3">
+          {/* BLOCK 2: Overall Test Metrics */}
+          <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <h5 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <Info className="w-4 h-4 text-sky-600" aria-hidden="true" />
-                Tail-Class Diagnostic Performance (5 Rarest Classes)
+              <h5 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                2. Overall Evaluation Metrics (Held-out Test Partition)
               </h5>
-              <span className="text-[11px] text-slate-400 font-mono">
-                Last updated: {data.last_updated}
+              <span className="text-[10px] font-mono text-slate-400">
+                Source: {overall_test_metrics.source}
               </span>
             </div>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-[10px] uppercase font-bold text-slate-500 block">Macro-F1</span>
+                <span className="text-lg font-black text-slate-900 font-mono mt-0.5 block">
+                  {(overall_test_metrics.macro_f1 * 100).toFixed(1)}%
+                </span>
+                <span className="text-[10px] text-slate-400">Target baseline</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-[10px] uppercase font-bold text-slate-500 block">Accuracy</span>
+                <span className="text-lg font-black text-slate-900 font-mono mt-0.5 block">
+                  {(overall_test_metrics.accuracy * 100).toFixed(1)}%
+                </span>
+                <span className="text-[10px] text-slate-400">Top-1 accuracy</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-[10px] uppercase font-bold text-slate-500 block">Balanced Acc</span>
+                <span className="text-lg font-black text-slate-900 font-mono mt-0.5 block">
+                  {(overall_test_metrics.balanced_accuracy * 100).toFixed(1)}%
+                </span>
+                <span className="text-[10px] text-slate-400">Mean class recall</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-[10px] uppercase font-bold text-slate-500 block">Weighted-F1</span>
+                <span className="text-lg font-black text-slate-900 font-mono mt-0.5 block">
+                  {(overall_test_metrics.weighted_f1 * 100).toFixed(1)}%
+                </span>
+                <span className="text-[10px] text-slate-400">Support-weighted</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-[10px] uppercase font-bold text-slate-500 block">Macro AUROC</span>
+                <span className="text-lg font-black text-slate-900 font-mono mt-0.5 block">
+                  {overall_test_metrics.macro_auroc.toFixed(4)}
+                </span>
+                <span className="text-[10px] text-slate-400">One-vs-rest mean</span>
+              </div>
+            </div>
+          </div>
 
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
+          {/* BLOCK 3: Malignant vs Benign Binary Audit */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <h5 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <ShieldAlert className="w-4 h-4 text-red-600" aria-hidden="true" />
+                3. Malignant vs Benign Binary Detection Metrics
+              </h5>
+              <span className="text-[10px] font-mono text-slate-400">
+                Source: {malignant_vs_benign_metrics.source}
+              </span>
+            </div>
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 bg-white rounded-lg border border-slate-200">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Sensitivity (Recall)</span>
+                  <span className="text-xl font-black text-emerald-700 font-mono mt-0.5 block">
+                    {(malignant_vs_benign_metrics.sensitivity * 100).toFixed(1)}%
+                  </span>
+                  <span className="text-[10px] text-slate-400">Malignant detection rate</span>
+                </div>
+                <div className="p-3 bg-white rounded-lg border border-slate-200">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Specificity</span>
+                  <span className="text-xl font-black text-slate-800 font-mono mt-0.5 block">
+                    {(malignant_vs_benign_metrics.specificity * 100).toFixed(1)}%
+                  </span>
+                  <span className="text-[10px] text-slate-400">Benign true negative rate</span>
+                </div>
+                <div className="p-3 bg-white rounded-lg border border-red-200">
+                  <span className="text-[10px] uppercase font-bold text-red-600 block">False Negatives (FN)</span>
+                  <span className="text-xl font-black text-red-700 font-mono mt-0.5 block">
+                    {malignant_vs_benign_metrics.false_negative_count}
+                  </span>
+                  <span className="text-[10px] text-red-600 font-medium">Critical misses ({((malignant_vs_benign_metrics.false_negative_count / malignant_vs_benign_metrics.total_malignant) * 100).toFixed(1)}%)</span>
+                </div>
+                <div className="p-3 bg-white rounded-lg border border-amber-200">
+                  <span className="text-[10px] uppercase font-bold text-amber-600 block">False Positives (FP)</span>
+                  <span className="text-xl font-black text-amber-700 font-mono mt-0.5 block">
+                    {malignant_vs_benign_metrics.false_positive_count}
+                  </span>
+                  <span className="text-[10px] text-amber-700 font-medium">Benign false alarms</span>
+                </div>
+              </div>
+
+              <div className="text-[11px] text-slate-600 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-2.5">
+                <span>
+                  <strong>Malignant Classes:</strong> {malignant_vs_benign_metrics.malignant_classes.join(', ')}
+                </span>
+                <span className="font-mono text-slate-500">
+                  TP={malignant_vs_benign_metrics.true_positive_count} &bull; TN={malignant_vs_benign_metrics.true_negative_count} &bull; Total Malignant={malignant_vs_benign_metrics.total_malignant} &bull; Total Benign={malignant_vs_benign_metrics.total_benign}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* BLOCK 4: Per-Class Recall & F1 with Support and Tail Class Flags */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <h5 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                4. Per-Class Diagnostic Performance &amp; Long-Tail Support
+              </h5>
+              <span className="text-[10px] font-mono text-slate-400">
+                Source: {per_class_metrics.source}
+              </span>
+            </div>
+            <div className="border border-slate-200 rounded-xl overflow-x-auto bg-white">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase text-[10px] tracking-wider">
                   <tr>
-                    <th scope="col" className="px-4 py-2.5">Class Code</th>
-                    <th scope="col" className="px-4 py-2.5">Clinical Classification</th>
-                    <th scope="col" className="px-4 py-2.5 text-right">F1 Score</th>
-                    <th scope="col" className="px-4 py-2.5 text-right">Evaluation Status</th>
+                    <th className="py-2.5 px-3">Class</th>
+                    <th className="py-2.5 px-3">Category</th>
+                    <th className="py-2.5 px-3">Recall</th>
+                    <th className="py-2.5 px-3">F1 Score</th>
+                    <th className="py-2.5 px-3">Precision</th>
+                    <th className="py-2.5 px-3">Test Support (N)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {TAIL_CLASSES.map((cls) => {
-                    const score = data.tail_class_f1[cls];
-                    const isMalignant = MALIGNANT_CLASSES.has(cls);
-                    const isMalOth = cls === 'MAL_OTH';
-
+                <tbody className="divide-y divide-slate-100 font-mono">
+                  {Object.entries(per_class_metrics.classes).map(([cls, metric]) => {
+                    const isMalignant = malignant_vs_benign_metrics.malignant_classes.includes(cls);
                     return (
-                      <tr key={cls} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="px-4 py-2.5 font-bold font-mono text-slate-900">
+                      <tr key={cls} className={metric.is_tail_class ? 'bg-amber-50/40' : ''}>
+                        <td className="py-2 px-3 font-bold text-slate-800">
                           {cls}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${
-                              isMalignant
-                                ? 'bg-red-50 text-red-700 border border-red-200'
-                                : 'bg-slate-100 text-slate-700 border border-slate-200'
-                            }`}
-                          >
-                            {isMalignant ? '⚠ Malignant' : 'Benign'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-800">
-                          {score !== null && score !== undefined
-                            ? `${(score * 100).toFixed(1)}%`
-                            : 'N/A'}
-                        </td>
-                        <td className="px-4 py-2.5 text-right text-slate-500">
-                          {isMalOth && score === null ? (
-                            <span className="text-amber-700 font-medium">
-                              Unstable estimate (n = 9 lesions)
+                          {isMalignant && (
+                            <span className="ml-1 text-[10px] text-red-600 font-semibold" title="Malignant diagnostic class">
+                              [Mal]
                             </span>
-                          ) : data.status === 'placeholder' ? (
-                            <span className="text-slate-400">Placeholder value</span>
-                          ) : (
-                            <span className="text-emerald-700 font-medium">Measured</span>
                           )}
+                        </td>
+                        <td className="py-2 px-3 text-[11px] font-sans">
+                          {metric.is_tail_class ? (
+                            <span className="inline-flex items-center gap-1 text-amber-800 font-semibold bg-amber-100/70 px-1.5 py-0.5 rounded text-[10px]">
+                              ⚠ Rare Tail Class
+                            </span>
+                          ) : (
+                            <span className="text-slate-500">Head / Moderate</span>
+                          )}
+                        </td>
+                        <td className="py-2 px-3 font-semibold text-slate-900">
+                          {(metric.recall * 100).toFixed(1)}%
+                        </td>
+                        <td className="py-2 px-3 font-semibold text-slate-900">
+                          {(metric.f1_score * 100).toFixed(1)}%
+                        </td>
+                        <td className="py-2 px-3 text-slate-600">
+                          {(metric.precision * 100).toFixed(1)}%
+                        </td>
+                        <td className="py-2 px-3 text-slate-700 font-bold">
+                          {metric.support}
                         </td>
                       </tr>
                     );
@@ -257,6 +269,118 @@ export function FairnessPanel() {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* BLOCK 5: Skin-Tone Subgroups with Low-Confidence Indicator */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <h5 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                5. Demographic Subgroups (Skin Tone Disparity Audit)
+              </h5>
+              <span className="text-[10px] font-mono text-slate-400">
+                Source: {skin_tone_subgroup_metrics.source}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+              {Object.entries(skin_tone_subgroup_metrics.subgroups).map(([bucketKey, subgroup]) => {
+                const label = bucketKey.replace('skin_tone_', 'Tone ');
+                return (
+                  <div
+                    key={bucketKey}
+                    className={`p-3 rounded-xl border flex flex-col justify-between gap-2 ${
+                      subgroup.low_confidence
+                        ? 'bg-amber-50/80 border-amber-300'
+                        : 'bg-slate-50 border-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-800">{label}</span>
+                      <span className="text-[10px] font-mono text-slate-500">n={subgroup.sample_count}</span>
+                    </div>
+
+                    <div className="space-y-0.5 text-xs font-mono">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500 font-sans text-[11px]">Accuracy:</span>
+                        <span className="font-bold text-slate-800">{(subgroup.accuracy * 100).toFixed(1)}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500 font-sans text-[11px]">Bal. Acc:</span>
+                        <span className="font-semibold text-slate-700">{(subgroup.balanced_accuracy * 100).toFixed(1)}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500 font-sans text-[11px]">Macro-F1:</span>
+                        <span className="font-semibold text-slate-700">{(subgroup.macro_f1 * 100).toFixed(1)}%</span>
+                      </div>
+                    </div>
+
+                    {/* Low confidence flag shown as icon + text */}
+                    {subgroup.low_confidence ? (
+                      <div
+                        role="status"
+                        className="flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300"
+                      >
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-700 shrink-0" aria-hidden="true" />
+                        <span>Low confidence (n &lt; 30)</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" aria-hidden="true" />
+                        <span>Adequate sample size</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Disparity metrics and caveat */}
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <span className="font-semibold">Disparity Summary: </span>
+                <span>Accuracy Disparity = {(skin_tone_subgroup_metrics.accuracy_disparity * 100).toFixed(2)}% | Balanced Accuracy Disparity = {(skin_tone_subgroup_metrics.balanced_accuracy_disparity * 100).toFixed(2)}%</span>
+              </div>
+              <p className="text-[11px] text-slate-500 italic max-w-lg">
+                {skin_tone_subgroup_metrics.disparity_caveat}
+              </p>
+            </div>
+          </div>
+
+          {/* BLOCK 6: Caveats List Verbatim */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <h5 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-slate-500" aria-hidden="true" />
+                6. Critical Scientific &amp; Clinical Caveats (Verbatim)
+              </h5>
+              <span className="text-[10px] font-mono text-slate-400">
+                Source: {caveats.source}
+              </span>
+            </div>
+            <ul className="space-y-2 text-xs text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-200 list-disc pl-5">
+              <li className="leading-relaxed">
+                <strong>Single Training Run:</strong> {caveats.single_run}
+              </li>
+              <li className="leading-relaxed">
+                <strong>Seed Variance:</strong> {caveats.seed_variance}
+              </li>
+              <li className="leading-relaxed">
+                <strong>Internal Test Split Only:</strong> {caveats.internal_test_split}
+              </li>
+              <li className="leading-relaxed">
+                <strong>Tail Class Low Support:</strong> Test supports for extreme tail classes:{' '}
+                {Object.entries(caveats.tail_class_supports)
+                  .map(([cls, count]) => `${cls}: n=${count}`)
+                  .join(', ')}
+                . High metric variance expected.
+              </li>
+              <li className="leading-relaxed">
+                <strong>Published Benchmark Incomparability:</strong> {caveats.published_benchmark_incomparability}
+              </li>
+              <li className="leading-relaxed font-semibold text-slate-900">
+                <strong>Clinical Scope:</strong> {caveats.clinical_decision_support_only}
+              </li>
+            </ul>
           </div>
         </div>
       )}
